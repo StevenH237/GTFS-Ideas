@@ -16,4 +16,5 @@ fare_id|exception_order|stop_id|route_id|exception_type
 :-|:-|:-|:-|:-
 `basefare`|1||`silverline`|1
 `basefare`|2|`40thst`||0
+
 … defines that although basefare is normally paid onboard a vehicle, for all `silverline` vehicles it must be paid in advance - except at the `40thst` stop, which doesn’t support advance payments, so the fare reverts to being paid on board even on silverline.
