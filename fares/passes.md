@@ -124,3 +124,71 @@ Field name|Field type|Field description
 `constraint_group_id`|ID|Which set of constraints this record is part of. The empty ID is also allowed, and is a group not merged with another group.
 *`hold_pass_id`*|Conditionally required: ID referencing `bulk_passes.pass_id`|The purchaser must possess `hold_pass_id` to purchase `pass_id`. If multiple are specified in one group, all must be held.
 *`purchase_pass_id`*|Conditionally required: ID referencing `bulk_passes.pass_id`|The purchaser must purchase `purchase_pass_id` and `pass_id` at the same time in order to purchase `pass_id`.
+*`purchase_fare_id`*|Conditionally required: ID referencing `fare_attributes.fare_id`|The purchaser must purchase `purchase_fare_id` to be able to purchase `pass_id`. This also means one of two things must be true:<ul><li>`purchase_fare_id` is a prepaid fare, and `pass_id` can be purchased at a stop where `purchase_fare_id` is valid.</li><li>`purchase_fare_id` is not a prepaid fare, and `pass_id` can be purchased onboard vehicles on which `purchase_fare_id` is valid.</li></ul>
+`use_pass_id`|ID referencing `bulk_passes.pass_id`|When specified, `purchase_fare_id` must be purchased using `use_pass_id` to purchase `pass_id`. Overrides `without_passes` if set.
+`without_pass_id`|ID referencing `bulk_passes.pass_id`|When specified, `purchase_fare_id` must not be purchased using any `without_pass_id`s.
+`without_passes`|Enum|Defines whether `purchase_fare_id` must be purchased without passes, if specified.<ul><li>`0` or empty: `purchase_fare_id` may be purchased using other passes.</li><li>`1`: `purchase_Fare_id` must be purchased without any passes, except any `use_pass_id`s.</li></ul>
+
+For the conditional requirement, exactly one of `hold_pass_id`, `purchase_pass_id`, or `purchase_fare_id` must be specified.
+
+## `bulk_pass_locations.txt`
+This table documents locations at which passes can be purchased.
+
+It contains the following fields:
+
+Field name|Field type|Field description
+:-|:-|:-
+**`location_id`**|Required: ID| A unique ID for the location in question.
+*`location_name`*|Conditionally required: Text|The name of the location in question. Required unless `stop_id` is specified, in which case it's optional and defaults to the name of the stop (or its `parent_station`, recursing upwards until a name is found).
+*`stop_id`*|Conditionally required: ID referencing `stops.stop_id`|Which stop ID this point-of-sale is at. Required unless the `location_type` is `4`, `6`, or `7`.
+`location_group_id`|ID (repeatable)|Which group of passes is sold at this location. If left blank, all passes are assumed to be sold here.
+*`location_url`*|Conditionally required: URL|A URL referring to more information about this location. Required for `location_type`=`7`, where it’s the URL at which passes may be purchased online, or which points to further information to mail order passes.
+*`agency_id`*|Conditionally required: ID referencing `agency.agency_id`|Which agency owns the location. If more than one system is represented in the file, this field is recommended; otherwise, it is presumed to be all the agencies at once.
+**`location_type`**|Required: Enum|What kind of location the entry refers to:<ul><li>`0` or empty: This information is unavailable.</li><li>`1`: A building branded by the transit agency.</li><li>`2`: A space branded by the transit agency, but in a building that is not.</li><li>`3`: A space not branded by the transit agency, e.g. the customer service desk of a grocery store.</li><li>`4`: The transit agency’s mobile app.</li><li>`5`: A Ticket Vending Machine operated by the transit agency.</li><li>`6`: Vehicles operated by the transit agency.</li><li>`7`: By mail order.</li></ul>
+
+The following fields are all optional enums with the following set of values:
+
+* `0` or empty: The information is not available.
+* `1`: The location accepts this method of payment.
+* `2`: The location doesn't accept this method of payment.
+
+Field name|Field description
+:-|:-
+`accepts_cash`|Whether or not cash is accepted for pass purchases at this location.
+`accepts_credit`|Whether or not credit cards are accepted for pass purchases at this location.
+`accepts_mobile_pay`|Whether or not mobile payments are accepted for pass purchases at this location.
+`accepts_smart_card`|Whether or not payments are accepted through balance on the transit providers’ smart cards for pass purchases at this location.
+`accepts_check`|Whether or not checks are accepted as payment for pass purchases at this location.
+
+## `bulk_pass_purchase_groups.txt`
+This table documents the groups that passes are sold in. It can be omitted (and, in fact, has no effect) if there are no `location_group_id`s specified in `bulk_pass_purchase_locations.txt`.
+
+It contains the following fields:
+
+Field name|Field type|Field details
+:-|:-|:-
+**`pass_id`**|Required: ID referencing `bulk_passes.pass_id`|Which pass is part of the group.
+**`location_group_id`**|Required: ID referencing `bulk_pass_purchase_locations.location_group_id`|Which group the pass is a part of.
+
+## `bulk_pass_vehicle_purchase.txt`
+This table documents when passes can be purchased aboard vehicles.
+
+If this table is not specified, all passes that fall under `location_group_id`s sold in locations where `location_type` is `6` are presumed to be sold on all vehicles of that agency’s routes.
+
+It contains the following fields:
+
+Field name|Field type|Field description
+:-|:-|:-
+*`route_id`*|Conditionally required: ID referencing `routes.route_id`|Which route the passes may be purchased on.
+*`trip_id`*|Conditionally required: ID referencing `trips.trip_id`|Which trip the passes may be purchased on.
+**`location_group_id`**|Required: ID referencing `bulk_pass_purchase_locations.location_group_id`|Which group of passes may be purchased on the route or trip.
+
+Exactly one of `route_id` and `trip_id` must be specified. If any trip_ids are specified of route_ids also specified, then the trip_ids specified override their route_ids.
+
+# Translations
+The following change to `translations.txt` is proposed to account for additional tables from this proposal:
+
+`table_name`|ID field for `record_id`|ID field for `record_sub_id`
+:-|:-|:-
+`bulk_passes`|`pass_id`|NONE
+`bulk_pass_locations`|`location_id`|NONE
