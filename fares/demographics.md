@@ -53,8 +53,8 @@ Note that only the specific combinations shown are overridden. If a fare class-d
 
 Field name|Field type|Field details
 :-|:-|:-
-**`demographic_id`**|Required: ID referencing `fare_demographics.demographic_id`| The demographic for which this fare adjustment applies.
-**`fare_id`**|Required: ID referencing `fare_attributes.fare_id`|The fare class for which this adjustment applies.
+**`demographic_id`**|Required: ID referencing [`fare_demographics.demographic_id`](#fare_demographicstxt)| The demographic for which this fare adjustment applies.
+**`fare_id`**|Required: ID referencing [`fare_attributes.fare_id`](https://developers.google.com/transit/gtfs/reference/#fare_attributestxt)|The fare class for which this adjustment applies.
 **`adjusted_price`**|Required: Float|The adjusted price the given demographic pays for the given fare.
 
 # Translating these tables
@@ -62,4 +62,4 @@ The following change to `translations.txt` is proposed to account for additional
 
 `table_name`|ID field for `record_id`|ID field for `record_sub_id`
 :-|:-|:-
-`fare_demographics`|`demographic_id`|NONE
+[`fare_demographics`](#fare_demographicstxt)|`demographic_id`|NONE

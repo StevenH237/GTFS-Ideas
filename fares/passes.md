@@ -1,9 +1,21 @@
 These tables document the various passes, fare caps, and bulk discounts that are available for the transit agency(ies).
 
 # The tables
-In order for this proposal to be useful
 
-## `bulk_passes.txt`
+## Table of Contents
+<!-- The pun is entirely intended. -->
+Table name|Requirement details
+:-|:-
+**[`passes.txt`](#passestxt)**|Required to use this proposal whatsoever.
+[`pass_constraints.txt`](#pass_constraintstxt)|Optional, only needed if constraints on purchasing passes actually exist.
+*[`pass_fares.txt`](#pass_farestxt)*|Required unless all passes fully cover all fares.
+[`pass_limit_groups.txt`](#pass_limit_groupstxt)|Optional, only useful for advanced limits.
+[`pass_locations.txt`](#pass_locationstxt)|Optional, used to indicate places passes may be purchased.
+*[`pass_period_times.txt`](#pass_period_timestxt)*|Required unless all passes are quantity-based or completely unlimited.
+*[`pass_periods.txt`](#pass_periodstxt)*|Required unless all passes are quantity-based or completely unlimited.
+[`pass_vehicle_purchase.txt`](#pass_vehicle_purchasetxt)|Optional, only needed if there are multiple vehicle-purchase groups.
+
+## `passes.txt`
 This table defines the passes.
 
 Field name|Field type|Field deails
@@ -12,12 +24,12 @@ Field name|Field type|Field deails
 **`pass_price`**|Required: Float|The cost of the pass, in a currency to be specified in the next field.
 **`pass_currency_type`**|Required: Currency code|The currency in which the pass is purchased.
 **`pass_name`**|Required: Text|The name of the pass.
-`fares_to_pass`|Integer|Up to this many fares may be retroactively applied towards the purchase of the pass, reducing the cost of the pass by the sum of those fares. Defaults to `0`.
+`fares_to_pass`|Integer|Up to this many fares may be retroactively applied towards the purchase of the pass, reducing the cost of the pass by the sum of those fares. Defaults to `0`. Only counts fares that are covered by the pass, and only the portion of fare that it covers.
 `fare_cap`|Enum|Whether or not the pass is a fare cap, which means that instead of being a pass purchased in advance, it is paid for by rides it covers and then takes full effect when its cost has been paid in rides within the time period. <ul><li>`0` or empty: The pass is not a fare cap.</li> <li>`1`: The pass is a fare cap.</li></ul>
 `activation_time`|Enum|This field indicates when the timer of a pass is considered to be activated. <ul><li>`0` or empty: A pass’ timer is activated by the first fare it covers. For passes where previously purchased fares are applied, or for fare caps, this is the earliest fare used to purchase or build up to the pass. Fares that would make the pass expire before purchase cannot be used to purchase the pass.</li> <li>`1`: A pass’ timer is activated during a fixed period of time, usually set during its creation.</li> <li>`2`: A pass’ timer is activated at the time of purchase.</li> <li>`3`: A pass’ timer is activated by the first fare after its purchase.</li> <li>`4`: A pass’ timer is activated when any of its limited-quantity trips are exhausted.</li> <li>`5`: A pass’ activation time is set to the same as the pass used to purchase it, if you must already have a pass to get a new one. For passes not purchased with other passes, treated as `0`.</li>
-`period_count`|Integer|How many periods (defined in `bulk_pass_period_times.txt`) the pass’s timer is valid for. Defaults to `1`.
+`period_count`|Integer|How many periods (defined in `pass_period_times.txt`) the pass’s timer is valid for. Defaults to `1`.
 
-## `bulk_pass_period_times.txt`
+## `pass_period_times.txt`
 This file documents the various periods of validity for bulk passes.
 
 Periods have two phases: An activation phase and a validity phase. The activation phase is the period of time during which a pass can be activated, and the validity phase is the period of time during which an already-active pass continues to be valid outside of the activation phase.
@@ -70,7 +82,7 @@ Field name|Field description
 `plus_days`|Adds that many days, ending at the same time-of-day.
 `plus_minutes`|Adds that many minutes.
 
-## `bulk_pass_periods.txt`
+## `pass_periods.txt`
 This table documents which periods apply to which passes.
 
 Multiple periods can be defined for a single pass. In that case, the start of a new period instantly ends the last one, except for the final period for which a pass is valid.
@@ -79,26 +91,26 @@ Passes without any periods specified expire when limited-quantity trips are exha
 
 Field name|Field type|Field description
 :-|:-|:-
-**`pass_id`**|Required: ID referencing `bulk_passes.pass_id`|The pass that this period applies to.
-**`period_id`**|Required: ID referencing `bulk_pass_period_times.period_id`|The period that applies to this pass.
+**`pass_id`**|Required: ID referencing [`passes.pass_id`](#passestxt)|The pass that this period applies to.
+**`period_id`**|Required: ID referencing [`pass_period_times.period_id`](#pass_period_timestxt)|The period that applies to this pass.
 
-## `bulk_pass_fares.txt`
+## `pass_fares.txt`
 This table documents how passes cover fares, including partial coverage, limited quantities, and transfers on a single use of the pass. If this table is not specified, all passes fully cover all fares in an unlimited quantity for their specified durations.
 
 It contains the following fields:
 
 Field name|Field type|Field description
 :-|:-|:-
-**`pass_id`**|Required: ID referencing `bulk_passes.pass_id`|The pass that covers this fare.
-**`fare_id`**|Required: ID referencing `fare_attributes.fare_id`|The fare that is covered by this pass.
+**`pass_id`**|Required: ID referencing [`passes.pass_id`](#passestxt)|The pass that covers this fare.
+**`fare_id`**|Required: ID referencing [`fare_attributes.fare_id`](https://developers.google.com/transit/gtfs/reference/#fare_attributestxt)|The fare that is covered by this pass.
 `covered_amount`|Float|One of the following:<ul><li>Empty, to indicate that the pass fully covers the fare (unless a value is provided for `covered_factor`).</li><li>A positive number, indicating that the pass covers that exact amount of the fare.</li><li>A negative number, indicating that the pass covers all but that amount of the fare.</li>
 `covered_factor`|Float|A number between `0` and `1` indicating how much of the fare (as a factor of the original fare, e.g. `0.5` is one-half) is covered by the pass.
 `limit`|Positive integer|The number of times this pass can be used for this fare. Applies only to this fare; if the same counter is used for multiple fares, a `limit_group_id` should be used instead. If both are empty, this pass covers this fare an unlimited number of times for its specified duration.
-`limit_group_id`|ID referencing `bulk_pass_limit_groups.limit_group_id`|Specifies the limit group this fare is deducted from.
+`limit_group_id`|ID referencing [`pass_limit_groups.limit_group_id`](#pass_limit_groupstxt)|Specifies the limit group this fare is deducted from.
 `activates_timer`|Enum|Whether the pass covering this fare "activates" the pass if it wasn't already:<ul><li>`0`: This fare doesn’t activate the timer on this pass.</li><li>`1` or empty: This fare activates the timer on this pass.</li><li>`2`: This fare (or `limit_group_id`) activates the timer just for itself.
 `transfers`|Integer|When using a pass for this fare, transfers are permitted this many times without counting as another use of the pass. If empty, defaults to the fare’s original value.
 
-## `bulk_pass_limit_groups`
+## `pass_limit_groups`
 This table documents the shared limits on bulk pass usages for various fares.
 
 It contains the following fields:
@@ -109,7 +121,7 @@ Field name|Field type|Field description
 **`limit`**|Required: Positive integer|How many times this pass can be used.
 `overuse`|Enum|If a fare would use more uses out of this limit than are remaining to be used, this value specifies how the pass handles it:<ul><li>`0` or empty: The pass cannot be used.</li><li>`1`: The pass will cover its usual amount and use all remaining uses.</li><li>`2`: The pass will cover the fare fractionally based on how many uses are remaining.</li></ul>
 
-## `bulk_pass_constraints.txt`
+## `pass_constraints.txt`
 This table documents constraints on purchasing passes.
 
 In order for a pass to be purchaseable, then all of the constraints within any `constraint_group_id` must be met.
@@ -120,18 +132,18 @@ It contains the following fields:
 
 Field name|Field type|Field description
 :-|:-|:-
-**`pass_id`**|Required: ID referencing `bulk_passes.pass_id`|The ID of the pass to which these constraints apply.
+**`pass_id`**|Required: ID referencing [`passes.pass_id`](#passestxt)|The ID of the pass to which these constraints apply.
 `constraint_group_id`|ID|Which set of constraints this record is part of. The empty ID is also allowed, and is a group not merged with another group.
-*`hold_pass_id`*|Conditionally required: ID referencing `bulk_passes.pass_id`|The purchaser must possess `hold_pass_id` to purchase `pass_id`. If multiple are specified in one group, all must be held.
-*`purchase_pass_id`*|Conditionally required: ID referencing `bulk_passes.pass_id`|The purchaser must purchase `purchase_pass_id` and `pass_id` at the same time in order to purchase `pass_id`.
-*`purchase_fare_id`*|Conditionally required: ID referencing `fare_attributes.fare_id`|The purchaser must purchase `purchase_fare_id` to be able to purchase `pass_id`. This also means one of two things must be true:<ul><li>`purchase_fare_id` is a prepaid fare, and `pass_id` can be purchased at a stop where `purchase_fare_id` is valid.</li><li>`purchase_fare_id` is not a prepaid fare, and `pass_id` can be purchased onboard vehicles on which `purchase_fare_id` is valid.</li></ul>
-`use_pass_id`|ID referencing `bulk_passes.pass_id`|When specified, `purchase_fare_id` must be purchased using `use_pass_id` to purchase `pass_id`. Overrides `without_passes` if set.
-`without_pass_id`|ID referencing `bulk_passes.pass_id`|When specified, `purchase_fare_id` must not be purchased using any `without_pass_id`s.
+*`hold_pass_id`*|Conditionally required: ID referencing [`passes.pass_id`](#passestxt)|The purchaser must possess `hold_pass_id` to purchase `pass_id`. If multiple are specified in one group, all must be held.
+*`purchase_pass_id`*|Conditionally required: ID referencing [`passes.pass_id`](#passestxt)|The purchaser must purchase `purchase_pass_id` and `pass_id` at the same time in order to purchase `pass_id`.
+*`purchase_fare_id`*|Conditionally required: ID referencing [`fare_attributes.fare_id`](https://developers.google.com/transit/gtfs/reference/#fare_attributestxt)|The purchaser must purchase `purchase_fare_id` to be able to purchase `pass_id`. This also means one of two things must be true:<ul><li>`purchase_fare_id` is a prepaid fare, and `pass_id` can be purchased at a stop where `purchase_fare_id` is valid.</li><li>`purchase_fare_id` is not a prepaid fare, and `pass_id` can be purchased onboard vehicles on which `purchase_fare_id` is valid.</li></ul>
+`use_pass_id`|ID referencing [`passes.pass_id`](#passestxt)|When specified, `purchase_fare_id` must be purchased using `use_pass_id` to purchase `pass_id`. Overrides `without_passes` if set.
+`without_pass_id`|ID referencing [`passes.pass_id`](#passestxt)|When specified, `purchase_fare_id` must not be purchased using any `without_pass_id`s.
 `without_passes`|Enum|Defines whether `purchase_fare_id` must be purchased without passes, if specified.<ul><li>`0` or empty: `purchase_fare_id` may be purchased using other passes.</li><li>`1`: `purchase_Fare_id` must be purchased without any passes, except any `use_pass_id`s.</li></ul>
 
 For the conditional requirement, exactly one of `hold_pass_id`, `purchase_pass_id`, or `purchase_fare_id` must be specified.
 
-## `bulk_pass_locations.txt`
+## `pass_locations.txt`
 This table documents locations at which passes can be purchased.
 
 It contains the following fields:
@@ -140,10 +152,10 @@ Field name|Field type|Field description
 :-|:-|:-
 **`location_id`**|Required: ID| A unique ID for the location in question.
 *`location_name`*|Conditionally required: Text|The name of the location in question. Required unless `stop_id` is specified, in which case it's optional and defaults to the name of the stop (or its `parent_station`, recursing upwards until a name is found).
-*`stop_id`*|Conditionally required: ID referencing `stops.stop_id`|Which stop ID this point-of-sale is at. Required unless the `location_type` is `4`, `6`, or `7`.
+*`stop_id`*|Conditionally required: ID referencing [`stops.stop_id`](https://developers.google.com/transit/gtfs/reference/#stopstxt)|Which stop ID this point-of-sale is at. Required unless the `location_type` is `4`, `6`, or `7`.
 `location_group_id`|ID (repeatable)|Which group of passes is sold at this location. If left blank, all passes are assumed to be sold here.
 *`location_url`*|Conditionally required: URL|A URL referring to more information about this location. Required for `location_type`=`7`, where it’s the URL at which passes may be purchased online, or which points to further information to mail order passes.
-*`agency_id`*|Conditionally required: ID referencing `agency.agency_id`|Which agency owns the location. If more than one system is represented in the file, this field is recommended; otherwise, it is presumed to be all the agencies at once.
+`agency_id`|ID referencing [`agency.agency_id`](https://developers.google.com/transit/gtfs/reference/#agencytxt)|Which agency owns the location. If more than one system is represented in the file, this field is recommended; otherwise, it is presumed to be all the agencies at once.
 **`location_type`**|Required: Enum|What kind of location the entry refers to:<ul><li>`0` or empty: This information is unavailable.</li><li>`1`: A building branded by the transit agency.</li><li>`2`: A space branded by the transit agency, but in a building that is not.</li><li>`3`: A space not branded by the transit agency, e.g. the customer service desk of a grocery store.</li><li>`4`: The transit agency’s mobile app.</li><li>`5`: A Ticket Vending Machine operated by the transit agency.</li><li>`6`: Vehicles operated by the transit agency.</li><li>`7`: By mail order.</li></ul>
 
 The following fields are all optional enums with the following set of values:
@@ -160,28 +172,30 @@ Field name|Field description
 `accepts_smart_card`|Whether or not payments are accepted through balance on the transit providers’ smart cards for pass purchases at this location.
 `accepts_check`|Whether or not checks are accepted as payment for pass purchases at this location.
 
-## `bulk_pass_purchase_groups.txt`
-This table documents the groups that passes are sold in. It can be omitted (and, in fact, has no effect) if there are no `location_group_id`s specified in `bulk_pass_purchase_locations.txt`.
+## `pass_location_groups.txt`
+This table documents the groups that passes are sold in. It can be omitted (and, in fact, has no effect) if there are no `location_group_id`s specified in `pass_locations.txt`.
 
 It contains the following fields:
 
 Field name|Field type|Field details
 :-|:-|:-
-**`pass_id`**|Required: ID referencing `bulk_passes.pass_id`|Which pass is part of the group.
-**`location_group_id`**|Required: ID referencing `bulk_pass_purchase_locations.location_group_id`|Which group the pass is a part of.
+**`pass_id`**|Required: ID referencing [`passes.pass_id`](#passestxt)|Which pass is part of the group.
+**`location_group_id`**|Required: ID referencing [`pass_locations.location_group_id`](#pass_location_groupstxt)|Which group the pass is a part of.
 
-## `bulk_pass_vehicle_purchase.txt`
+## `pass_vehicle_purchase.txt`
 This table documents when passes can be purchased aboard vehicles.
 
 If this table is not specified, all passes that fall under `location_group_id`s sold in locations where `location_type` is `6` are presumed to be sold on all vehicles of that agency’s routes.
+
+If this table *is* specified, it is assumed to have exhaustive information on buying passes on vehicles (routes and trips not specified are assumed to disallow purchases).
 
 It contains the following fields:
 
 Field name|Field type|Field description
 :-|:-|:-
-*`route_id`*|Conditionally required: ID referencing `routes.route_id`|Which route the passes may be purchased on.
-*`trip_id`*|Conditionally required: ID referencing `trips.trip_id`|Which trip the passes may be purchased on.
-**`location_group_id`**|Required: ID referencing `bulk_pass_purchase_locations.location_group_id`|Which group of passes may be purchased on the route or trip.
+*`route_id`*|Conditionally required: ID referencing [`routes.route_id`](https://developers.google.com/transit/gtfs/reference/#routestxt)|Which route the passes may be purchased on.
+*`trip_id`*|Conditionally required: ID referencing [`trips.trip_id`](https://developers.google.com/transit/gtfs/reference/#tripstxt)|Which trip the passes may be purchased on.
+**`location_group_id`**|Required: ID referencing [`pass_locations.location_group_id`](#pass_locationstxt)|Which group of passes may be purchased on the route or trip.
 
 Exactly one of `route_id` and `trip_id` must be specified. If any trip_ids are specified of route_ids also specified, then the trip_ids specified override their route_ids.
 
@@ -190,5 +204,5 @@ The following change to `translations.txt` is proposed to account for additional
 
 `table_name`|ID field for `record_id`|ID field for `record_sub_id`
 :-|:-|:-
-`bulk_passes`|`pass_id`|NONE
-`bulk_pass_locations`|`location_id`|NONE
+[`passes`](#passestxt)|`pass_id`|NONE
+[`pass_locations`](#pass_locationstxt)|`location_id`|NONE
