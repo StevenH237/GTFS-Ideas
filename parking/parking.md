@@ -56,7 +56,7 @@ Field name|Field type|Field details
 *`parking_period_id`*|Conditionally required: ID referencing [`parking_periods.parking_period_id`](#parking_periodstxt)|The ID of the time period to which this rule applies. If left blank, the rule applies to all times not inside a period.
 **`opening_type`**|Required: Enum|How open or closed the lot is at this time:<ul><li>`0` or empty: The lot is open to vehicles entering or exiting.</li><li>`1`: The lot is not open to entry, but people may retrieve and exit with their vehicles.</li><li>`2`: The lot is not open to entry or exit, but vehicles may be stored during this time.</li><li>`3`: The lot is not open to entry or exit, and must not be occupied by any vehicles at this time.</li></ul>
 `max_stay`|Positive integer|How long a vehicle may be kept at the lot during this period, expressed in seconds. Deemed to be unlimited (during opening hours) if empty.
-`continue_timing`|Enum|Indicates whether the timing should take into account 
+`continue_timing`|Enum|Indicates whether the timing should take into account the stay of the vehicle from before the period started.
 
 ## `parking_rates.txt`
 This table defines the rates to pay for parking.
