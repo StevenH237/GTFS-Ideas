@@ -6,6 +6,9 @@ Note that the term "parking lot" can be used to refer to any of the following (n
 * A parking garage
 * A bicycle rack
 
+# Prerequisites
+This proposal requires the [periods proposal](../common/periods.md) in order to be implemented.
+
 # The tables
 
 ## Table of contents
@@ -13,7 +16,6 @@ Table name|Requirement details
 :-|:-
 [**`parking_lots`**](#parking_lotstxt)|Required in order to use this propsal.
 [**`parking_hours`**](#parking_hourstxt)|Required unless all defined lots have 24/7 access.
-[**`parking_periods`**](#parking_periodstxt)|Required in order to use this proposal, unless all defined lots are free with 24/7 access.
 [*`parking_rates`*](#parking_ratestxt)|Required if any parking lots require a fee be paid to park.
 
 ## `parking_lots.txt`
@@ -26,24 +28,13 @@ Field name|Field type|Field details
 **`parking_lot_id`**|Required: ID|The ID of this parking lot.
 **`stop_id`**|Required: ID referencing [`stops.stop_id`](https://developers.google.com/transit/gtfs/reference/#stopstxt)|The stop - usually of `location_type` 3 - indicating where this parking lot is located.
 `parking_type`|Enum|The type of this parking lot:<ul><li>`0` or empty: Parking for cars</li><li>`1`: Parking for bikes</li></ul>
-`public_spaces`|Non-negative integer|How many spaces are available for parking, excluding accessibly-reserved spaces.
+`public_spaces`|Non-negative integer|How many spaces are available for parking. This count includes all spaces, including accessibly-reserved, electric-reserved, or other special spaces.
 `accessible_spaces`|Non-negative integer|How many accessibly-reserved spaces are available for parking.
-`covered_spaces`|Non-negative integer|How many of the spaces are covered. Covered spaces should still be counted under `public_spaces` or `accessible_spaces`.
+`electric_spaces`|Non-negative integer|How many spaces are reserved for electric vehicles.
+`covered_spaces`|Non-negative integer|How many of the spaces are covered.
+`ev_chargers`|Enum|Whether or not there are electric vehicle chargers available at this lot (branded or otherwise):<ul><li>`0` or empty: Unknown.</li><li>`1`: Yes.</li><li>`2`: No.</li></ul>
 
 ## `parking_periods.txt`
-This table defines the time periods that are available for parking lots.
-
-It contains the following fields:
-
-Field name|Field type|Field details
-:-|:-|:-
-**`parking_period_id`**|Required: ID|The ID of this time period.
-**`service_id`**|Required: ID referencing [`calendar.service_id`](https://developers.google.com/transit/gtfs/reference/#calendartxt) or [`calendar_dates.service_id`](https://developers.google.com/transit/gtfs/reference/#calendar_datestxt)|The service ID indicating the days to which this period applies.
-**`start_time`**|Required: Time|The time at which this period starts.
-**`end_time`**|Required: Time|The time at which this period ends.
-`reset_daily`|Enum|If a period spans 24 hours, should it reset daily at the end of the time?<ul><li>`0`: No.</li><li>`1` or empty: Yes.</li></ul>
-
-## `parking_hours.txt`
 This table defines what hours lots are open.
 
 Parking lots not mentioned in this table are assumed to be open 24/7 to both entrance and exit. Lots mentioned in this table are assumed to be closed, locked, and illegal to occupy except during the mentioned periods.
@@ -53,7 +44,7 @@ It contains the following fields:
 Field name|Field type|Field details
 :-|:-|:-
 **`parking_lot_id`**|Required: ID referencing [`parking_lots.parking_lot_id`](#parking_lotstxt)|The ID of the parking lot to which this period applies.
-*`parking_period_id`*|Conditionally required: ID referencing [`parking_periods.parking_period_id`](#parking_periodstxt)|The ID of the time period to which this rule applies. If left blank, the rule applies to all times not inside a period.
+*`period_id`*|Conditionally required: ID referencing [`periods.period_id`](../common/periods.md#periodstxt)|The ID of the time period to which this rule applies. If left blank, the rule applies to all times not inside a period.
 **`opening_type`**|Required: Enum|How open or closed the lot is at this time:<ul><li>`0` or empty: The lot is open to vehicles entering or exiting.</li><li>`1`: The lot is not open to entry, but people may retrieve and exit with their vehicles.</li><li>`2`: The lot is not open to entry or exit, but vehicles may be stored during this time.</li><li>`3`: The lot is not open to entry or exit, and must not be occupied by any vehicles at this time.</li></ul>
 `max_stay`|Positive integer|How long a vehicle may be kept at the lot during this period, expressed in seconds. Deemed to be unlimited (during opening hours) if empty.
 `continue_timing`|Enum|Indicates whether the timing should take into account the stay of the vehicle from before the period started.
