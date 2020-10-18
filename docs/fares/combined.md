@@ -1,6 +1,8 @@
-With both the [passes](passes.md) and [fare demographics](demographics.md) proposals combined, an extra table can be implemented to connect the two:
+With multiple proposals implemented together, extra tables can be made to connect them to each other.
 
-## pass_demographics.txt
+## `pass_demographics.txt`
+*Prerequisites: [passes](passes.md) and [demographics](demographics.md)*
+
 This table documents how much different demographics pay for different passes, or different fares on different passes.
 
 It contains the following fields:
