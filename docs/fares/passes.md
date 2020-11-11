@@ -38,7 +38,7 @@ A pass can have multiple periods; if their activation phases overlap, then any o
 
 It contains the following fields:
 
-Field name|Field type|Field description
+Field name|Field type|Field details
 :-|:-|:-
 **`period_id`**|Required: ID|The ID of the period being described by this record.
 `start_extended_day`|Enum|Whether or not trips after midnight following a given schedule day still count as that schedule day or their actual calendar date for pass activation:<ul><li>`0` or empty: They count as the calendar day.</li><li>`1`: They count as the schedule day.</li></ul>
@@ -48,7 +48,7 @@ Field name|Field type|Field description
 ### Validity start times
 These fields are all optional text fields. They define the time at which a new period starts, but only times that match all of them count. These follow [cron](https://crontab.guru/) syntax, except that `,` is replaced with `;` - `*` means any value is valid, `/` means every nth value is valid, `-` indicates a range of values, and `;` separates multiple valid values. Note that the defaults cause a new period every minute.
 
-Field name|Field description
+Field name|Field details
 :-|:-
 `start_year`|The year during which a new period starts. Defaults to `*`. Note: A period that defines specific years happens only once!
 `start_month`|The month during which a new period starts. Defaults to `*` if `start_year` is `*`; `1` otherwise.
@@ -62,7 +62,7 @@ Field name|Field description
 ### Validity end times
 These fields can be used to specify when the activation phases of periods end. All are optional text fields. A period's activation phase ends when either the next one begins or an end time passes, whichever comes first. Passes cannot be activated during times when an end time has happened more recently than a start.
 
-Field name|Field description
+Field name|Field details
 :-|:-
 `end_year`|The year during which an activation phase ends. Defaults to `*`.
 `end_month`|The month during which an activation phase ends. Defaults to the value that `start_month` uses.
@@ -76,7 +76,7 @@ Field name|Field description
 ### Extended validity phases
 These fields are all optional integers that specify the length of the validity phase, which is time outside the activation phase of a period that still counts as being within the same period. For example, if a pass starts an activation phase every midnight but has a validity phase of three hours, activating that pass at 01:05 January 23rd would result in it expiring 03:00 January 24th. All of these fields default to 0. Values are added top to bottom.
 
-Field name|Field description
+Field name|Field details
 :-|:-
 `plus_months`|Adds that many months, ending at the same time-of-day and day-of-month as the start (end, iff `plus_month_end` is `1`) of the activation phase. If that day of that month doesn’t exist, then it ends at 00:00 on the 1st of the next month instead.
 `plus_days`|Adds that many days, ending at the same time-of-day.
@@ -89,7 +89,7 @@ Multiple periods can be defined for a single pass. In that case, the start of a 
 
 Passes without any periods specified expire when limited-quantity trips are exhausted. If there are no limited-quantity trips, passes don't expire (i.e. )
 
-Field name|Field type|Field description
+Field name|Field type|Field details
 :-|:-|:-
 **`pass_id`**|Required: ID referencing [`passes.pass_id`](#passestxt)|The pass that this period applies to.
 **`period_id`**|Required: ID referencing [`pass_period_times.period_id`](#pass_period_timestxt)|The period that applies to this pass.
@@ -99,23 +99,39 @@ This table documents how passes cover fares, including partial coverage, limited
 
 It contains the following fields:
 
-Field name|Field type|Field description
+Field name|Field type|Field details
 :-|:-|:-
 **`pass_id`**|Required: ID referencing [`passes.pass_id`](#passestxt)|The pass that covers this fare.
 **`fare_id`**|Required: ID referencing [`fare_attributes.fare_id`](https://developers.google.com/transit/gtfs/reference/#fare_attributestxt)|The fare that is covered by this pass.
-`covered_amount`|Float|One of the following:<ul><li>Empty, to indicate that the pass fully covers the fare (unless a value is provided for `covered_factor`).</li><li>A positive number, indicating that the pass covers that exact amount of the fare.</li><li>A negative number, indicating that the pass covers all but that amount of the fare.</li>
-`covered_factor`|Float|A number between `0` and `1` indicating how much of the fare (as a factor of the original fare, e.g. `0.5` is one-half) is covered by the pass.
+`covered_amount`|Float|One of the following:<ul><li>Empty, to indicate that the pass fully covers the fare (unless a value is provided for `covered_factor`).</li><li>A positive number, indicating that the pass covers that exact amount of the fare.</li><li>A negative number, indicating that the pass covers all but that amount of the fare.</li><li>Zero, indicating this pass doesn't cover this fare except during certain times specified in [`pass_times.txt`](#pass_timestxt).</li>
+`covered_factor`|Float|A number between `0` and `1` indicating how much of the fare (as a factor of the original fare, e.g. `0.5` is one-half) is covered by the pass. Ignored if `covered_amount` is specified.
 `limit`|Positive integer|The number of times this pass can be used for this fare. Applies only to this fare; if the same counter is used for multiple fares, a `limit_group_id` should be used instead. If both are empty, this pass covers this fare an unlimited number of times for its specified duration.
+`limit_uses`|Positive integer|The number of uses this fare takes out of this `limit_group_id`. Ignored if `limit_group_id` is empty.
 `limit_group_id`|ID referencing [`pass_limit_groups.limit_group_id`](#pass_limit_groupstxt)|Specifies the limit group this fare is deducted from.
 `activates_timer`|Enum|Whether the pass covering this fare "activates" the pass if it wasn't already:<ul><li>`0`: This fare doesn’t activate the timer on this pass.</li><li>`1` or empty: This fare activates the timer on this pass.</li><li>`2`: This fare (or `limit_group_id`) activates the timer just for itself.
 `transfers`|Integer|When using a pass for this fare, transfers are permitted this many times without counting as another use of the pass. If empty, defaults to the fare’s original value.
+
+## `pass_times.txt`
+This table documents when passes cover fares differently.
+
+*Note: This table works a lot better with [timed fares](timed.md), but may stand on its own too. Additionally, some timed fare systems may not need this table.*
+
+It contains the following fields:
+
+Field name|Field type|Field details
+:-|:-|:-
+**`pass_id`**|Required: ID referencing [`passes.pass_id`](#passestxt)|The pass that covers this fare during this time.
+**`fare_id`**|Required: ID referencing [`fare_attributes.fare_id`](https://developers.google.com/transit/gtfs/reference/#fare_attributestxt)|The fare that is covered by this pass during this time.
+**`period_id`**|Required: ID referencing [`periods.period_id`](../common/periods.md#periodstxt)|The time during which this pass covers this fare.
+`covered_amount`|Float|One of the following:<ul><li>Empty, to indicate that the pass fully covers the fare during this time (unless a value is provided for `covered_factor`).</li><li>A positive number, indicating that the pass covers that exact amount of the fare during this time.</li><li>A negative number, indicating that the pass covers all but that amount of the fare during this time.</li><li>Zero, indicating this pass doesn't cover this fare during this time.</li>
+`covered_factor`|Float|A number between `0` and `1` indicating how much of the fare (as a factor of the original fare, e.g. `0.5` is one-half) is covered by the pass during this time. Ignored if `covered_amount` is specified.
 
 ## `pass_limit_groups`
 This table documents the shared limits on bulk pass usages for various fares.
 
 It contains the following fields:
 
-Field name|Field type|Field description
+Field name|Field type|Field details
 :-|:-|:-
 **`limit_group_id`**|Required: ID|The identifier for this group.
 **`limit`**|Required: Positive integer|How many times this pass can be used.
@@ -130,7 +146,7 @@ Please note that constraints do not automatically imply their inverse; for examp
 
 It contains the following fields:
 
-Field name|Field type|Field description
+Field name|Field type|Field details
 :-|:-|:-
 **`pass_id`**|Required: ID referencing [`passes.pass_id`](#passestxt)|The ID of the pass to which these constraints apply.
 `constraint_group_id`|ID|Which set of constraints this record is part of. The empty ID is also allowed, and is a group not merged with another group.
@@ -148,7 +164,7 @@ This table documents locations at which passes can be purchased.
 
 It contains the following fields:
 
-Field name|Field type|Field description
+Field name|Field type|Field details
 :-|:-|:-
 **`location_id`**|Required: ID| A unique ID for the location in question.
 *`location_name`*|Conditionally required: Text|The name of the location in question. Required unless `stop_id` is specified, in which case it's optional and defaults to the name of the stop (or its `parent_station`, recursing upwards until a name is found).
@@ -164,7 +180,7 @@ The following fields are all optional enums with the following set of values:
 * `1`: The location accepts this method of payment.
 * `2`: The location doesn't accept this method of payment.
 
-Field name|Field description
+Field name|Field details
 :-|:-
 `accepts_cash`|Whether or not cash is accepted for pass purchases at this location.
 `accepts_credit`|Whether or not credit cards are accepted for pass purchases at this location.
@@ -191,7 +207,7 @@ If this table *is* specified, it is assumed to have exhaustive information on bu
 
 It contains the following fields:
 
-Field name|Field type|Field description
+Field name|Field type|Field details
 :-|:-|:-
 *`route_id`*|Conditionally required: ID referencing [`routes.route_id`](https://developers.google.com/transit/gtfs/reference/#routestxt)|Which route the passes may be purchased on.
 *`trip_id`*|Conditionally required: ID referencing [`trips.trip_id`](https://developers.google.com/transit/gtfs/reference/#tripstxt)|Which trip the passes may be purchased on.
