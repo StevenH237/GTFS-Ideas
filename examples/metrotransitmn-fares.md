@@ -10,9 +10,9 @@ Table name|From proposal
 :-|:-
 [fare_attributes.txt](#fare_attributestxt)|[GTFS Standard](https://developers.google.com/transit/gtfs/reference/#fare_attributestxt)
 [fare_rules.txt](#fare_rulestxt)|[GTFS Standard](https://developers.google.com/transit/gtfs/reference/#fare_rulestxt)
-[fare_times.txt](#fare_timestxt)|[Timed fares](../fares/timed.md/#fare_timestxt)
-[fare_demographics.txt](#fare_demographicstxt)|[Fare demographics](../fares/demographics.md#fare_demographicstxt)
-[fare_demographic_prices.txt](#fare_demographic_pricestxt)|[Fare demographics](../fares/demographics.md#fare_demographic_pricestxt)
+[fare_times.txt](#fare_timestxt)|[Timed fares](../docs/fares/timed.md/#fare_timestxt)
+[fare_demographics.txt](#fare_demographicstxt)|[Fare demographics](../docs/fares/demographics.md#fare_demographicstxt)
+[fare_demographic_prices.txt](#fare_demographic_pricestxt)|[Fare demographics](../docs/fares/demographics.md#fare_demographic_pricestxt)
 
 ## `fare_attributes.txt`
 `fare_id`|`price`|`currency_type`|`
