@@ -21,7 +21,6 @@ Table name|From proposal
 `pd_am_rush`|{Weekdays}|06:00:00|09:00:00|AM Rush Hours
 `pd_pm_rush`|{Weekdays}|15:00:00|18:30:00|PM Rush Hours
 
-
 ## `fare_attributes.txt`
 `fare_id`|`price`|`currency_type`|`payment_method`|`transfers`|`transfer_duration`
 :-|:-|:-|:-|:-|:-
