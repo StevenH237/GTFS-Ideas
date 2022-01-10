@@ -6,6 +6,7 @@ Several proposals in this repo use "periods", which are - simply put - periods o
 This table describes the actual periods of time in question.
 
 It contains the following fields:
+
 Field name|Field type|Field details
 :-|:-|:-
 **`period_id`**|Required: ID|The ID for the period of time.
